@@ -2134,7 +2134,7 @@ class DebugAranges:
 
         def __lt__(self, other):
             '''Provide less than comparison for bisect functions'''
-            if type(other) is int:
+            if isinstance(other, (int, long)):
                 return self.address_ranges.max_range.lo < other
             else:
                 return (self.address_ranges.max_range.lo <
@@ -2281,7 +2281,7 @@ class AddressRange:
         return self.lo != other.lo or self.hi != other.hi
 
     def __lt__(self, other):
-        if type(other) is int:
+        if isinstance(other, (int, long)):
             return self.lo < other
         else:
             if self.lo < other.lo:
@@ -2919,7 +2919,7 @@ class LineTable:
                     'children': False}
 
         def __lt__(self, other):
-            if type(other) is int:
+            if isinstance(other, (int, long)):
                 return self.range.lo < other
             return self.range < other.range
 
@@ -3749,7 +3749,7 @@ class CompileUnit:
         self.die_ranges = None
 
     def __lt__(self, other):
-        if type(other) is int:
+        if isinstance(other, (int, long)):
             return self.offset < other
         else:
             raise ValueError
