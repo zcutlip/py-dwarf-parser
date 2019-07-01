@@ -12,10 +12,9 @@ import subprocess
 import sys
 import tempfile
 
-# Local imports
-import dict_utils
-import file_extract
-import term_colors
+from .util import dict_utils
+from .util import file_extract
+from .util import term_colors
 
 enable_colors = False
 indent_width = 4
