@@ -2,3 +2,6 @@
 .DS_Store
 xcuserdata
 build
+*.egg-info
+dist/*
+.vscode
