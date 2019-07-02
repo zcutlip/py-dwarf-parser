@@ -3300,7 +3300,7 @@ class DIE:
             return None
 
     def get_name(self):
-        if self.name is -1:
+        if self.name == -1:
             self.name = self.get_attribute_value_as_string(DW_AT_name)
         return self.name
 
@@ -3436,13 +3436,13 @@ class DIE:
             die_ranges.append_die_ranges(self, arange_list)
 
     def get_mangled_name(self):
-        if self.mangled is -1:
+        if self.mangled == -1:
             self.mangled = self.get_first_attribute_value_as_string(
                 [DW_AT_MIPS_linkage_name, DW_AT_linkage_name])
         return self.mangled
 
     def get_demangled_name(self):
-        if self.demangled is -1:
+        if self.demangled == -1:
             mangled = self.get_mangled_name()
             if mangled:
                 self.demangled = commands.getoutput('c++filt -n %s' % (
@@ -3477,7 +3477,7 @@ class DIE:
         return None
 
     def get_display_name(self):
-        if self.user_visible_name is -1:
+        if self.user_visible_name == -1:
             self.user_visible_name = None
             demangled = self.get_demangled_name()
             if demangled:
