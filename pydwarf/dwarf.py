@@ -3311,6 +3311,17 @@ class DIE:
             self.name = self.get_attribute_value_as_string(DW_AT_name)
         return self.name
 
+    def get_decl_file(self):
+        attr_value = self.get_attribute_value(DW_AT_decl_file)
+        if attr_value:
+            return attr_value.get_value_as_string(self)
+        else:
+            return None
+
+    def get_decl_line(self):
+        attr_value = self.get_attribute_value_as_integer(DW_AT_decl_line)
+        return attr_value
+
     def get_debug_ranges(self):
         '''Get the DW_AT_ranges address ranges only. Don't check the
         low_pc or high_pc'''
