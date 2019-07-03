@@ -1095,6 +1095,13 @@ class Location(object):
                 else:
                     last = stack.pop()
                     stack[-1].value = stack[-1].value - last.value
+            elif op == DW_OP_plus_uconst:
+                value1 = operand.value1
+                try:
+                    last = stack.pop()
+                except IndexError:
+                    last = 0
+                stack.append(last + value1)
             else:
                 print 'error: unhandled %s' % (operand.op)
                 return None
@@ -3586,7 +3593,12 @@ class DIE:
         if attr_value:
             if type(attr_value.value) is int:
                 return attr_value.value
-        return fail_value
+            elif isinstance(attr_value.get_value(self), Location):
+                loc = attr_value.get_value(self)
+                return loc.evaluate()
+        else:
+            return fail_value
+
 
     def get_attribute_value_as_string(self, attr_enum_value, fail_value=None):
         attr_value = self.get_attribute_value(attr_enum_value)
