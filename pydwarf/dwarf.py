@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from __future__ import absolute_import
+from __future__ import print_function
 import binascii
 import bisect
 import commands
@@ -15,6 +17,8 @@ import tempfile
 from .util import dict_utils
 from .util import file_extract
 from .util import term_colors
+import six
+from six.moves import range
 
 enable_colors = False
 indent_width = 4
@@ -631,7 +635,7 @@ DW_UT_split_type = 0x06
 
 
 def is_string(value):
-    return isinstance(value, basestring)
+    return isinstance(value, six.string_types)
 
 
 def tag_is_variable(tag):
@@ -681,9 +685,9 @@ def get_uleb128_byte_size(value):
 def dump_block(data, outfile):
 
     data_len = len(data)
-    print >>outfile, '<%u>' % (data_len),
+    print('<%u>' % (data_len), end=' ', file=outfile)
     for byte in data:
-        print >>outfile, binascii.hexlify(byte),
+        print(binascii.hexlify(byte), end=' ', file=outfile)
 
 
 class DWARFInfo:
@@ -1017,16 +1021,16 @@ class Operand(object):
 
     def dump(self, verbose, f=sys.stdout):
         if self.num_values == 0:
-            print >>f, '%s' % (self.op),
+            print('%s' % (self.op), end=' ', file=f)
         elif self.num_values == 1:
             if self.op in [DW_OP_addr]:
-                print >>f, '%s(0x%16.16x)' % (self.op, self.value1),
+                print('%s(0x%16.16x)' % (self.op, self.value1), end=' ', file=f)
             else:
-                print >>f, '%s(%u)' % (self.op, self.value1),
+                print('%s(%u)' % (self.op, self.value1), end=' ', file=f)
         elif self.num_values == 2:
-            print >>f, '%s(%s, %s)' % (self.op, self.value1, self.value2),
+            print('%s(%s, %s)' % (self.op, self.value1, self.value2), end=' ', file=f)
         else:
-            print >>f, 'error: unhandled argument count in Operand class'
+            print('error: unhandled argument count in Operand class', file=f)
             raise ValueError
 
     def __str__(self):
@@ -1081,16 +1085,16 @@ class Location(object):
                                            DW_STACK_TYPE_SCALAR))
             elif op == DW_OP_plus:
                 if len(stack) < 2:
-                    print 'error: stack size is too small for DW_OP_plus in',
-                    print self
+                    print('error: stack size is too small for DW_OP_plus in', end=' ')
+                    print(self)
                     exit(2)
                 else:
                     last = stack.pop()
                     stack[-1].value = stack[-1].value + last.value
             elif op == DW_OP_minus:
                 if len(stack) < 2:
-                    print 'error: stack size is too small for DW_OP_plus in',
-                    print self
+                    print('error: stack size is too small for DW_OP_plus in', end=' ')
+                    print(self)
                     exit(2)
                 else:
                     last = stack.pop()
@@ -1103,16 +1107,16 @@ class Location(object):
                     last = 0
                 stack.append(last + value1)
             else:
-                print 'error: unhandled %s' % (operand.op)
+                print('error: unhandled %s' % (operand.op))
                 return None
         stack_len = len(stack)
         if stack_len == 1:
             return stack[-1]
         if stack_len == 0:
-            print 'error: nothing left of the stack for location: %s' % (self)
+            print('error: nothing left of the stack for location: %s' % (self))
         if stack_len != 1:
-            print 'error: multiple things left on the stack for location:',
-            print self
+            print('error: multiple things left on the stack for location:', end=' ')
+            print(self)
         return None
 
     def get_operands(self):
@@ -1225,7 +1229,7 @@ class Location(object):
         if operands:
             for (idx, operand) in enumerate(operands):
                 if idx > 0:
-                    print >>f, ',',
+                    print(',', end=' ', file=f)
                 operand.dump(verbose=verbose, f=f)
 
     def __str__(self):
@@ -1651,7 +1655,7 @@ class Form(dict_utils.Enum):
             return get_uleb128_byte_size(len(value)) + len(value)
         elif form == DW_FORM_exprloc:
             return get_uleb128_byte_size(len(value)) + len(value)
-        print 'error: failed to get byte size of form %s' % (self)
+        print('error: failed to get byte size of form %s' % (self))
         raise ValueError
 
     def skip(self, die, data):
@@ -1683,7 +1687,7 @@ class Form(dict_utils.Enum):
             elif form == DW_FORM_exprloc:
                 size = data.get_uleb128()
             else:
-                print 'error: failed to skip form %s' % (self)
+                print('error: failed to skip form %s' % (self))
                 return False
         if size > 0:
             data.seek(data.tell()+size)
@@ -2141,7 +2145,7 @@ class DebugAranges:
 
         def __lt__(self, other):
             '''Provide less than comparison for bisect functions'''
-            if isinstance(other, (int, long)):
+            if isinstance(other, six.integer_types):
                 return self.address_ranges.max_range.lo < other
             else:
                 return (self.address_ranges.max_range.lo <
@@ -2288,7 +2292,7 @@ class AddressRange:
         return self.lo != other.lo or self.hi != other.hi
 
     def __lt__(self, other):
-        if isinstance(other, (int, long)):
+        if isinstance(other, six.integer_types):
             return self.lo < other
         else:
             if self.lo < other.lo:
@@ -2434,7 +2438,7 @@ class DIERanges:
 
     def dump(self, indent='', f=sys.stdout):
         for r in self.ranges:
-            print >>f, '%s%s' % (indent, r)
+            print('%s%s' % (indent, r), file=f)
 
     def __str__(self):
         output = StringIO.StringIO()
@@ -2477,9 +2481,9 @@ class DebugRanges:
                     f.write(' [%#x-%#x)' % (r.lo, r.hi))
             else:
                 if self.offset >= 0:
-                    print >>f, '0x%8.8x' % (self.offset)
+                    print('0x%8.8x' % (self.offset), file=f)
                 for r in self.ranges:
-                    print >>f, '%s%s' % (indent, r)
+                    print('%s%s' % (indent, r), file=f)
 
         def __str__(self):
             output = StringIO.StringIO()
@@ -2539,7 +2543,7 @@ class LineTable:
         self.prologue = None
         self.rows = None
         self.sequence_ranges = None
-        self.row_arange = Range(sys.maxint, 0, 0, 0)
+        self.row_arange = Range(sys.maxsize, 0, 0, 0)
 
     def get_item_dictionary(self):
         rows = self.get_rows()
@@ -2661,14 +2665,14 @@ class LineTable:
                 while data.tell() < end_offset:
                     opcode = data.get_uint8()
                     if debug:
-                        print DW_LNS(opcode),
+                        print(DW_LNS(opcode), end=' ')
                     if opcode == 0:
                         # Extended opcodes always start with zero followed
                         # by uleb128 length to they can be skipped
                         length = data.get_uleb128()
                         dw_lne = data.get_uint8()
                         if debug:
-                            print DW_LNE(dw_lne),
+                            print(DW_LNE(dw_lne), end=' ')
                         if dw_lne == DW_LNE_end_sequence:
                             row.end_sequence = True
                             self.rows.append(copy.copy(row))
@@ -2676,13 +2680,13 @@ class LineTable:
                             if self.row_arange.hi < row.range.lo:
                                 self.row_arange.hi = row.range.lo
                             if debug:
-                                print ''
+                                print('')
                                 row.dump(prologue)
                             row = LineTable.Row(prologue)
                         elif dw_lne == DW_LNE_set_address:
                             row.range.lo = data.get_address()
                             if debug:
-                                print '(0x%16.16x)' % (row.range.lo),
+                                print('(0x%16.16x)' % (row.range.lo), end=' ')
                         elif dw_lne == DW_LNE_define_file:
                             file_entry = LineTable.File()
                             file_entry.unpack(data)
@@ -2694,7 +2698,7 @@ class LineTable:
                             # parse it and toss it
                             discriminator = data.get_uleb128()
                             if debug:
-                                print '(0x%x)' % (discriminator),
+                                print('(0x%x)' % (discriminator), end=' ')
                         else:
                             # Skip unknown extended opcode
                             data.seek(data.tell() + length)
@@ -2704,27 +2708,27 @@ class LineTable:
                             if row.range.lo < self.row_arange.lo:
                                 self.row_arange.lo = row.range.lo
                             if debug:
-                                print ''
+                                print('')
                                 row.dump(prologue)
                             row.post_append()
                         elif opcode == DW_LNS_advance_pc:
                             pc_offset = data.get_uleb128()
                             if debug:
-                                print '(%u)' % (pc_offset),
+                                print('(%u)' % (pc_offset), end=' ')
                             row.range.lo += pc_offset
                         elif opcode == DW_LNS_advance_line:
                             line_offset = data.get_sleb128()
                             if debug:
-                                print '(%i)' % (line_offset),
+                                print('(%i)' % (line_offset), end=' ')
                             row.line += line_offset
                         elif opcode == DW_LNS_set_file:
                             row.file = data.get_uleb128()
                             if debug:
-                                print '(%u)' % (row.file),
+                                print('(%u)' % (row.file), end=' ')
                         elif opcode == DW_LNS_set_column:
                             row.column = data.get_uleb128()
                             if debug:
-                                print '(%u)' % (row.column),
+                                print('(%u)' % (row.column), end=' ')
                         elif opcode == DW_LNS_negate_stmt:
                             row.is_stmt = not row.is_stmt
                         elif opcode == DW_LNS_set_basic_block:
@@ -2734,12 +2738,12 @@ class LineTable:
                             addr_units = adjust_opcode / prologue.line_range
                             addr_offset = addr_units * prologue.min_inst_length
                             if debug:
-                                print '(%u)' % (addr_offset),
+                                print('(%u)' % (addr_offset), end=' ')
                             row.range.lo += addr_offset
                         elif opcode == DW_LNS_fixed_advance_pc:
                             pc_offset = data.get_uint16()
                             if debug:
-                                print '(%u)' % (pc_offset),
+                                print('(%u)' % (pc_offset), end=' ')
                             row.range.lo += pc_offset
                         elif opcode == DW_LNS_set_prologue_end:
                             row.prologue_end = True
@@ -2748,10 +2752,10 @@ class LineTable:
                         elif opcode == DW_LNS_set_isa:
                             row.isa = data.get_uleb128()
                             if debug:
-                                print '(%u)' % (row.isa),
+                                print('(%u)' % (row.isa), end=' ')
                         else:
-                            print 'error: unhandled DW_LNS value %u' % (
-                                opcode)
+                            print('error: unhandled DW_LNS value %u' % (
+                                opcode))
                     else:
                         adjust_opcode = opcode - prologue.opcode_base
                         addr_units = adjust_opcode / prologue.line_range
@@ -2759,19 +2763,19 @@ class LineTable:
                         addr_offset = addr_units * prologue.min_inst_length
                         line_offset = prologue.line_base + line_units
                         if debug:
-                            print "0x%2.2x address += %u, line += %d" % (
-                                opcode, addr_offset, line_offset),
+                            print("0x%2.2x address += %u, line += %d" % (
+                                opcode, addr_offset, line_offset), end=' ')
                         row.line += line_offset
                         row.range.lo += addr_offset
                         self.rows.append(copy.copy(row))
                         if row.range.lo < self.row_arange.lo:
                             self.row_arange.lo = row.range.lo
                         if debug:
-                            print ''
+                            print('')
                             row.dump(prologue)
                         row.post_append()
                     if debug:
-                        print ''
+                        print('')
             # Now calculate the end addresses for all rows that aren't
             # end_sequence rows
             prev_row = None
@@ -2806,7 +2810,7 @@ class LineTable:
                         func_die = self.cu.lookup_die_by_address(row.range.lo)
                         if func_die:
                             if verbose:
-                                print func_die
+                                print(func_die)
                             else:
                                 f.write('%s0x%8.8x%s: %s%s%s:\n' % (
                                     colorizer.yellow(), func_die.offset,
@@ -2814,9 +2818,9 @@ class LineTable:
                                     func_die.get_display_name(),
                                     colorizer.reset()))
                         else:
-                            print >>f, '<???>:'
+                            print('<???>:', file=f)
                 if verbose:
-                    print row
+                    print(row)
                 else:
                     curr_file = row.file
                     # Skip the last entries that don't have a valid range
@@ -2828,9 +2832,9 @@ class LineTable:
                                     row.range, row.line,
                                     prologue.get_file(row.file)))
                         else:
-                            print >>f, '%s %6u' % (row.range, row.line)
+                            print('%s %6u' % (row.range, row.line), file=f)
                 if row.end_sequence:
-                    print >>f, ''
+                    print('', file=f)
 
     def __str__(self):
         output = StringIO.StringIO()
@@ -2857,9 +2861,9 @@ class LineTable:
                     debug_line.put_uint8(DW_LNS_advance_pc)
                     debug_line.put_uleb128(self.range.lo - prev.range.lo)
                 elif self.range.lo < prev.range.lo:
-                    print 'warning: row has address (%#x)' % (self.range.lo),
-                    print 'that is less than previous row (%#x)' % (
-                            prev.range.lo)
+                    print('warning: row has address (%#x)' % (self.range.lo), end=' ')
+                    print('that is less than previous row (%#x)' % (
+                            prev.range.lo))
                     # Pretend we have unsigned 32 or 64 bit overflow
                     positive_delta = prev.range.lo - self.range.lo
                     debug_line.put_uint8(DW_LNS_advance_pc)
@@ -2926,7 +2930,7 @@ class LineTable:
                     'children': False}
 
         def __lt__(self, other):
-            if isinstance(other, (int, long)):
+            if isinstance(other, six.integer_types):
                 return self.range.lo < other
             return self.range < other.range
 
@@ -2943,31 +2947,31 @@ class LineTable:
         def dump_lookup_results(self, prologue, f=sys.stdout):
             cu = prologue.cu
             cu_die = cu.get_die()
-            print >>f, '.debug_info[0x%8.8x]: %s' % (cu_die.get_offset(),
-                                                     cu.get_path())
+            print('.debug_info[0x%8.8x]: %s' % (cu_die.get_offset(),
+                                                     cu.get_path()), file=f)
             filepath = prologue.get_file(self.file)
-            print >>f, '.debug_line[0x%8.8x]: %s %s:%u' % (prologue.offset,
+            print('.debug_line[0x%8.8x]: %s %s:%u' % (prologue.offset,
                                                            self.range,
                                                            filepath,
-                                                           self.line)
+                                                           self.line), file=f)
 
         def dump(self, prologue, f=sys.stdout):
-            print >>f, '0x%16.16x %5u %5u %5u' % (self.range.lo,
+            print('0x%16.16x %5u %5u %5u' % (self.range.lo,
                                                   self.file,
                                                   self.line,
-                                                  self.column),
+                                                  self.column), end=' ', file=f)
             if self.is_stmt:
-                print >>f, 'is_stmt',
+                print('is_stmt', end=' ', file=f)
             if self.basic_block:
-                print >>f, 'basic_block',
+                print('basic_block', end=' ', file=f)
             if self.end_sequence:
-                print >>f, 'end_sequence',
+                print('end_sequence', end=' ', file=f)
             if self.prologue_end:
-                print >>f, 'prologue_end',
+                print('prologue_end', end=' ', file=f)
             if self.epilogue_begin:
-                print >>f, 'epilogue_begin',
+                print('epilogue_begin', end=' ', file=f)
             if self.isa:
-                print >>f, 'isa = %u' % (self.isa),
+                print('isa = %u' % (self.isa), end=' ', file=f)
 
         def __str__(self):
             output = StringIO.StringIO()
@@ -3087,41 +3091,41 @@ class LineTable:
                     and len(self.files) > 0)
 
         def dump(self, verbose, f=sys.stdout):
-            print >>f, '.debug_line[0x%8.8x]:' % (self.offset)
+            print('.debug_line[0x%8.8x]:' % (self.offset), file=f)
             if verbose:
-                print >>f, 'prologue.total_length    = 0x%8.8x' % (
-                        self.total_length)
-                print >>f, 'prologue.version         = 0x%4.4x' % (
-                        self.version)
-                print >>f, 'prologue.prologue_length = 0x%8.8x' % (
-                        self.prologue_length)
-                print >>f, 'prologue.min_inst_length = %i' % (
-                        self.min_inst_length)
-                print >>f, 'prologue.default_is_stmt = %i' % (
-                        self.default_is_stmt)
-                print >>f, 'prologue.line_base       = %i' % (
-                        self.line_base)
-                print >>f, 'prologue.line_range      = %u' % (
-                        self.line_range)
-                print >>f, 'prologue.opcode_base     = %u' % (
-                        self.opcode_base)
+                print('prologue.total_length    = 0x%8.8x' % (
+                        self.total_length), file=f)
+                print('prologue.version         = 0x%4.4x' % (
+                        self.version), file=f)
+                print('prologue.prologue_length = 0x%8.8x' % (
+                        self.prologue_length), file=f)
+                print('prologue.min_inst_length = %i' % (
+                        self.min_inst_length), file=f)
+                print('prologue.default_is_stmt = %i' % (
+                        self.default_is_stmt), file=f)
+                print('prologue.line_base       = %i' % (
+                        self.line_base), file=f)
+                print('prologue.line_range      = %u' % (
+                        self.line_range), file=f)
+                print('prologue.opcode_base     = %u' % (
+                        self.opcode_base), file=f)
                 max_len = DW_LNS.max_width()
                 for (i, op_len) in enumerate(self.opcode_lengths):
                     dw_lns = DW_LNS(i+1)
-                    print >>f, 'prologue.opcode_lengths[%-*s] = %u' % (max_len,
+                    print('prologue.opcode_lengths[%-*s] = %u' % (max_len,
                                                                        dw_lns,
-                                                                       op_len)
+                                                                       op_len), file=f)
                 for (i, directory) in enumerate(self.directories):
-                    print >>f, 'prologue.directories[%u] = "%s"' % (i+1,
-                                                                    directory)
+                    print('prologue.directories[%u] = "%s"' % (i+1,
+                                                                    directory), file=f)
                 for (i, filename) in enumerate(self.files):
                     filename.dump(i+1, f=f)
             else:
                 for (i, directory) in enumerate(self.directories):
-                    print >>f, 'directory[%u] = "%s"' % (i+1, directory)
+                    print('directory[%u] = "%s"' % (i+1, directory), file=f)
                 for (i, filename) in enumerate(self.files):
-                    print >>f, 'file[%u] = "%s"' % (i+1,
-                                                    filename.get_path(self))
+                    print('file[%u] = "%s"' % (i+1,
+                                                    filename.get_path(self)), file=f)
 
         def get_file(self, file_num):
             file_idx = file_num - 1
@@ -3202,10 +3206,10 @@ class LineTable:
                 f = LineTable.File()
             self.rows_offset = data.tell()
             if self.rows_offset != end_prologue_offset:
-                print 'error: error parsing prologue, end offset',
-                print '0x%8.8x != actual offset 0x%8.8x' % (
-                        end_prologue_offset, self.rows_offset)
-                print str(self)
+                print('error: error parsing prologue, end offset', end=' ')
+                print('0x%8.8x != actual offset 0x%8.8x' % (
+                        end_prologue_offset, self.rows_offset))
+                print(str(self))
             return self.is_valid()
 
 
@@ -3578,7 +3582,7 @@ class DIE:
                     if attr_value.extract_value(self, data, debug_str):
                         return attr_value
                     else:
-                        print 'error: failed to extract attribute value...'
+                        print('error: failed to extract attribute value...')
                         return None
                 elif (curr_attr_enum_value == DW_AT_abstract_origin or
                       curr_attr_enum_value == DW_AT_specification):
@@ -3692,7 +3696,7 @@ class DIE:
                 f.write(colorizer.reset())
                 f.write('\n')
             else:
-                print >>f, ''
+                print('', file=f)
 
             attr_values = self.get_attribute_values(show_all_attrs)
             for attr_value in attr_values:
@@ -3772,7 +3776,7 @@ class CompileUnit:
         self.die_ranges = None
 
     def __lt__(self, other):
-        if isinstance(other, (int, long)):
+        if isinstance(other, six.integer_types):
             return self.offset < other
         else:
             raise ValueError
@@ -3845,8 +3849,8 @@ class CompileUnit:
     def contains_offset(self, offset):
         return self.offset <= offset and offset < self.get_next_cu_offset()
 
-    def dump(self, verbose, max_depth=sys.maxint, f=sys.stdout):
-        print >>f, str(self)
+    def dump(self, verbose, max_depth=sys.maxsize, f=sys.stdout):
+        print(str(self), file=f)
         die = self.get_die()
         die.dump(verbose=verbose, max_depth=max_depth, f=f)
 
@@ -3917,7 +3921,7 @@ class CompileUnit:
                 if die.is_valid():
                     self.dies.append(die)
                 else:
-                    print 'error: not able to decode die'
+                    print('error: not able to decode die')
                     exit(1)
 
                 if abbrev_decl is None:
@@ -4101,17 +4105,17 @@ class DebugInfo:
         return None
 
     def dump_debug_info(self, verbose=False, f=sys.stdout):
-        print >>f, '.debug_info\n'
+        print('.debug_info\n', file=f)
         cus = self.get_compile_units()
         for cu in cus:
-            cu.dump(verbose=verbose, max_depth=sys.maxint, f=f)
+            cu.dump(verbose=verbose, max_depth=sys.maxsize, f=f)
 
     def dump_debug_types(self, verbose=False, f=sys.stdout):
         tus = self.get_type_units()
         if tus:
-            print >>f, '.debug_types\n'
+            print('.debug_types\n', file=f)
             for tu in tus:
-                tu.dump(verbose=verbose, max_depth=sys.maxint, f=f)
+                tu.dump(verbose=verbose, max_depth=sys.maxsize, f=f)
 
     def __str__(self):
         s = '.debug_info\n'
@@ -4194,24 +4198,24 @@ class AppleHash:
         return names
 
     def dump(self, f=sys.stdout):
-        print >>f, '          magic = 0x%8.8x' % (self.magic)
-        print >>f, '        version = 0x%4.4x' % (self.version)
-        print >>f, '      hash_enum = 0x%8.8x' % (self.hash_enum)
-        print >>f, '   bucket_count = 0x%8.8x (%u)' % (self.bucket_count,
-                                                       self.bucket_count)
-        print >>f, '   hashes_count = 0x%8.8x (%u)' % (self.hashes_count,
-                                                       self.hashes_count)
-        print >>f, 'prologue_length = 0x%8.8x' % (self.prologue_length)
-        print >>f, 'prologue:'
+        print('          magic = 0x%8.8x' % (self.magic), file=f)
+        print('        version = 0x%4.4x' % (self.version), file=f)
+        print('      hash_enum = 0x%8.8x' % (self.hash_enum), file=f)
+        print('   bucket_count = 0x%8.8x (%u)' % (self.bucket_count,
+                                                       self.bucket_count), file=f)
+        print('   hashes_count = 0x%8.8x (%u)' % (self.hashes_count,
+                                                       self.hashes_count), file=f)
+        print('prologue_length = 0x%8.8x' % (self.prologue_length), file=f)
+        print('prologue:', file=f)
         self.prologue.dump(f=f)
         for (i, hash_idx) in enumerate(self.hash_indexes):
             if hash_idx == 4294967295:
-                print >>f, ' bucket[%u] = <EMPTY>' % (i)
+                print(' bucket[%u] = <EMPTY>' % (i), file=f)
             else:
-                print >>f, ' bucket[%u] = hashes[%u]' % (i, hash_idx)
+                print(' bucket[%u] = hashes[%u]' % (i, hash_idx), file=f)
         for (i, offset) in enumerate(self.offsets):
-            print >>f, ' hashes[%u] = 0x%8.8x' % (i, self.hashes[i])
-            print >>f, 'offsets[%u] = 0x%8.8x' % (i, offset)
+            print(' hashes[%u] = 0x%8.8x' % (i, self.hashes[i]), file=f)
+            print('offsets[%u] = 0x%8.8x' % (i, offset), file=f)
             if self.prologue:
                 self.prologue.dump_hash_data(data=self.data, offset=offset,
                                              f=f)
@@ -4250,8 +4254,8 @@ class DWARFHash:
             self.form = Form(form)
 
         def dump(self, index, f=sys.stdout):
-            print >>f, 'atom[%u] type = %s, form = %s' % (index, self.type,
-                                                          self.form)
+            print('atom[%u] type = %s, form = %s' % (index, self.type,
+                                                          self.form), file=f)
 
         def __str__(self):
             output = StringIO.StringIO()
@@ -4293,9 +4297,9 @@ class DWARFHash:
 
         def dump(self, f=sys.stdout):
             if self.name is None:
-                print >>f, '0x%8.8x: <NULL>' % (self.offset)
+                print('0x%8.8x: <NULL>' % (self.offset), file=f)
             else:
-                print >>f, '0x%8.8x: "%s"' % (self.offset, self.name)
+                print('0x%8.8x: "%s"' % (self.offset, self.name), file=f)
             if self.die_infos:
                 for die_info in self.die_infos:
                     die_info.dump(f=f)
@@ -4331,18 +4335,18 @@ class DWARFHash:
             return True
 
         def dump(self, f=sys.stdout):
-            print >>f, '    ',
+            print('    ', end=' ', file=f)
             if self.offset >= 0:
-                print >>f, '{0x%8.8x}' % (self.offset),
+                print('{0x%8.8x}' % (self.offset), end=' ', file=f)
             if self.tag is not None:
-                print >>f, '%s' % (self.tag),
+                print('%s' % (self.tag), end=' ', file=f)
             if self.type_flags >= 0:
-                print >>f, 'type_flags = 0x%8.8x' % (self.type_flags),
+                print('type_flags = 0x%8.8x' % (self.type_flags), end=' ', file=f)
             if self.qualified_name_hash >= 0:
-                print >>f, 'qualified_hash = 0x%8.8x' % (
+                print('qualified_hash = 0x%8.8x' % (
 
-                        self.qualified_name_hash),
-            print >>f
+                        self.qualified_name_hash), end=' ', file=f)
+            print(file=f)
 
         def __str__(self):
             output = StringIO.StringIO()
@@ -4387,7 +4391,7 @@ class DWARFHash:
                 for atom in self.atoms:
                     size = self.form.get_fixed_size()
                     if size == -1:
-                        print 'error: not a fixed size'
+                        print('error: not a fixed size')
                         raise ValueError
                     fixed_size += size
                 data.seek(data.tell() + fixed_size)
@@ -4409,8 +4413,8 @@ class DWARFHash:
                     break
 
         def dump(self, f=sys.stdout):
-            print >>f, 'prologue.die_base_offset = 0x%8.8x' % (
-                self.die_base_offset)
+            print('prologue.die_base_offset = 0x%8.8x' % (
+                self.die_base_offset), file=f)
             for (i, atom) in enumerate(self.atoms):
                 atom.dump(index=i, f=f)
 
@@ -4519,9 +4523,9 @@ class StringTable:
         for (i, byte) in enumerate(self.bytes):
             if i % 32 == 0:
                 offset_str = "0x%8.8x:" % (i)
-                print offset_str,
-            print binascii.hexlify(byte),
-        print
+                print(offset_str, end=' ')
+            print(binascii.hexlify(byte), end=' ')
+        print()
 
 
 class DWARFGenerator:
@@ -4655,16 +4659,16 @@ class DWARFGenerator:
         # Need at least .debug_abbrev and .debug_info to make a DWARF file.
         if len(debug_abbrev_bytes) and len(debug_info_bytes):
             command += ' -'
-            print '%s' % (command)
+            print('%s' % (command))
             (status, output) = commands.getstatusoutput(command)
             if output:
-                print output
+                print(output)
             if status != 0:
-                print 'error: %u' % (status)
+                print('error: %u' % (status))
             else:
-                print 'success'
+                print('success')
         else:
-            print 'error: no .debug_abbrev or .debug_info bytes'
+            print('error: no .debug_abbrev or .debug_info bytes')
 
         for path in remove_files:
             os.remove(path)
@@ -4837,7 +4841,7 @@ class DWARFGenerator:
                 value = self.value.encode(die.cu.generator.debug_ranges)
 
             if form == DW_FORM_strp:
-                if isinstance(value, basestring):
+                if isinstance(value, six.string_types):
                     stroff = die.cu.generator.strtab.add(value)
                 else:
                     stroff = value
@@ -5157,8 +5161,8 @@ def dump_die_variables(die):
         if type_die:
             byte_size = die.get_byte_size()
             if byte_size > 0:
-                print '0x%8.8x: <%5u> %s' % (die.get_offset(), byte_size,
-                                             die.get_name())
+                print('0x%8.8x: <%5u> %s' % (die.get_offset(), byte_size,
+                                             die.get_name()))
                 total_byte_size += byte_size
     child = die.get_child()
     while child:
@@ -5196,22 +5200,22 @@ def handle_dwarf_options(options, objfile, f=sys.stdout):
         if dwarf:
             if options.debug_abbrev:
                 debug_abbrev = dwarf.get_debug_abbrev()
-                print debug_abbrev
+                print(debug_abbrev)
             if options.debug_aranges:
                 debug_aranges = dwarf.get_debug_aranges()
-                print debug_aranges
+                print(debug_aranges)
             debug_info = dwarf.get_debug_info()
             if debug_info:
                 if options.lookup_names:
                     for name in options.lookup_names:
                         dies = debug_info.find_dies_with_name(name)
                         if dies:
-                            print >>f, "DIEs with name '%s':" % (name)
+                            print("DIEs with name '%s':" % (name), file=f)
                             for die in dies:
                                 die.dump_ancestry(verbose=options.verbose,
                                                   show_all_attrs=True, f=f)
                         else:
-                            print >>f, "No DIEs with name '%s'" % (name)
+                            print("No DIEs with name '%s'" % (name), file=f)
                 if options.debug_info:
                     debug_info.dump_debug_info(verbose=options.verbose, f=f)
                 if options.debug_types:
@@ -5219,17 +5223,17 @@ def handle_dwarf_options(options, objfile, f=sys.stdout):
                 if options.debug_map:
                     die_ranges = debug_info.get_die_ranges()
                     if die_ranges:
-                        print die_ranges
+                        print(die_ranges)
                 if options.lookup_addresses:
                     for address in options.lookup_addresses:
-                        print 'lookup 0x%8.8x' % (address)
+                        print('lookup 0x%8.8x' % (address))
                         result = debug_info.lookup_address(address)
                         pprint.PrettyPrinter(indent=4).pprint(result)
                 if options.cu_names:
                     for cu_name in options.cu_names:
                         cu = debug_info.get_compile_unit_with_path(cu_name)
                         if cu:
-                            print cu.get_die()
+                            print(cu.get_die())
                             line_table = cu.get_line_table()
                             line_table.dump(verbose=options.verbose)
                 if options.debug_line:
@@ -5243,8 +5247,8 @@ def handle_dwarf_options(options, objfile, f=sys.stdout):
                         if die:
                             if options.variable_size:
                                 size = dump_die_variables(die)
-                                print '0x%8.8x: total variable size is %u' % (
-                                    die_offset, size)
+                                print('0x%8.8x: total variable size is %u' % (
+                                    die_offset, size))
                             else:
                                 die.dump(verbose=options.verbose,
                                          show_all_attrs=True)
@@ -5253,20 +5257,20 @@ def handle_dwarf_options(options, objfile, f=sys.stdout):
                                   '0x%8.8x' % (die_offset))
                 if options.apple_names:
                     apple_names = dwarf.get_apple_names()
-                    print apple_names
+                    print(apple_names)
                 if options.apple_types:
                     apple_types = dwarf.get_apple_types()
-                    print apple_types
+                    print(apple_types)
             else:
-                print 'error: no .debug_info'
+                print('error: no .debug_info')
         else:
-            print 'error: no DWARF in "%s"' % (objfile.path)
+            print('error: no DWARF in "%s"' % (objfile.path))
 
 
 def main():
     args = ['colorize', 'dwarfdump']
     args.extend(sys.argv[1:])
-    print subprocess.check_output(args)
+    print(subprocess.check_output(args))
 
 
 if __name__ == '__main__':
