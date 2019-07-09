@@ -2,15 +2,20 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import division
+
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 import binascii
 import bisect
-import commands
+import subprocess
 import copy
 import optparse
 import os
 import pprint
-import StringIO
-import subprocess
+import io
 import sys
 import tempfile
 
@@ -18,7 +23,9 @@ from .util import dict_utils
 from .util import file_extract
 from .util import term_colors
 import six
-from six.moves import range
+
+from future import standard_library
+standard_library.install_aliases()
 
 enable_colors = False
 indent_width = 4
@@ -690,7 +697,7 @@ def dump_block(data, outfile):
         print(binascii.hexlify(byte), end=' ', file=outfile)
 
 
-class DWARFInfo:
+class DWARFInfo(object):
     '''DWARF information that carries the DWARF version, address byte size,
        and DWARF32/DWARF64'''
     def __init__(self, version, addr_size, dwarf_size, byte_order='='):
@@ -1034,7 +1041,7 @@ class Operand(object):
             raise ValueError
 
     def __str__(self):
-        output = StringIO.StringIO()
+        output = io.StringIO()
         self.dump(True, output)
         return output.getvalue()
 
@@ -1124,7 +1131,7 @@ class Location(object):
             self.operands = list()
             if self.attr_value.attr_spec.form.is_block():
                 data = file_extract.FileExtract(
-                        StringIO.StringIO(self.attr_value.value),
+                        io.StringIO(self.attr_value.value),
                         self.die.cu.data.byte_order,
                         self.die.cu.data.addr_size)
                 op = data.get_uint8()
@@ -1233,7 +1240,7 @@ class Location(object):
                 operand.dump(verbose=verbose, f=f)
 
     def __str__(self):
-        output = StringIO.StringIO()
+        output = io.StringIO()
         self.dump(True, output)
         return output.getvalue()
 
@@ -1786,7 +1793,7 @@ def get_color_DW_constant(c):
     return colorizer.faint() + str(c) + colorizer.reset()
 
 
-class AttributeSpec:
+class AttributeSpec(object):
     def __init__(self, attr, form):
         self.attr = Attribute(attr)
         self.form = Form(form)
@@ -1806,7 +1813,7 @@ class AttributeSpec:
         return self.attr != rhs.attr or self.form != rhs.form
 
 
-class AttributeValue:
+class AttributeValue(object):
     def __init__(self, attr_spec):
         self.offset = 0
         self.attr_spec = attr_spec
@@ -1866,7 +1873,7 @@ class AttributeValue:
             return str(enum_value)
         else:
             if self.attr_spec.form.is_block():
-                output = StringIO.StringIO()
+                output = io.StringIO()
                 dump_block(self.value, output)
                 return '%s' % (output.getvalue())
             elif self.attr_spec.form.is_reference():
@@ -1921,12 +1928,12 @@ class AttributeValue:
                     form_value, colorizer.reset()))
 
     def __str__(self):
-        output = StringIO.StringIO()
+        output = io.StringIO()
         self.dump(die=None, verbose=True, f=output)
         return output.getvalue()
 
 
-class AbbrevDecl:
+class AbbrevDecl(object):
     def __init__(self):
         self.offset = 0
         self.code = 0
@@ -2037,7 +2044,7 @@ class AbbrevDecl:
         return s
 
 
-class AbbrevSet:
+class AbbrevSet(object):
     def __init__(self):
         self.offset = 0
         self.abbrevs = list()
@@ -2095,7 +2102,7 @@ class AbbrevSet:
         return None
 
 
-class DebugAbbrev:
+class DebugAbbrev(object):
     def __init__(self):
         self.sets = list()
 
@@ -2119,8 +2126,8 @@ class DebugAbbrev:
         return s
 
 
-class DebugAranges:
-    class Set:
+class DebugAranges(object):
+    class Set(object):
         def __init__(self, dwarf_info=None):
             self.offset = 0
             self.length = 0
@@ -2160,7 +2167,7 @@ class DebugAranges:
             self.address_ranges.dump(f=f, addr_size=self.dwarf_info.addr_size)
 
         def __str__(self):
-            output = StringIO.StringIO()
+            output = io.StringIO()
             self.dump(f=output)
             return output.getvalue()
 
@@ -2253,12 +2260,12 @@ class DebugAranges:
             arange_set.dump(f=f)
 
     def __str__(self):
-        output = StringIO.StringIO()
+        output = io.StringIO()
         self.dump(f=output)
         return output.getvalue()
 
 
-class AddressRange:
+class AddressRange(object):
     def __init__(self, lo, hi):
         self.lo = lo
         self.hi = hi
@@ -2319,7 +2326,7 @@ class AddressRange:
         return self.hi - self.lo
 
 
-class AddressRangeList:
+class AddressRangeList(object):
     def __init__(self):
         self.ranges = list()
         self.max_range = None
@@ -2341,9 +2348,9 @@ class AddressRangeList:
 
     def encode(self, encoder):
         offset = encoder.file.tell()
-        for range in self.ranges:
-            encoder.put_address(range.lo)
-            encoder.put_address(range.hi)
+        for _range in self.ranges:
+            encoder.put_address(_range.lo)
+            encoder.put_address(_range.hi)
         encoder.put_address(0)
         encoder.put_address(0)
         return offset
@@ -2365,8 +2372,8 @@ class AddressRangeList:
         if isinstance(value, AddressRange):
             self.ranges.append(copy.copy(value))
         elif isinstance(value, AddressRangeList):
-            for range in value.ranges:
-                self.ranges.append(copy.copy(range))
+            for _range in value.ranges:
+                self.ranges.append(copy.copy(_range))
         else:
             raise ValueError
 
@@ -2376,10 +2383,10 @@ class AddressRangeList:
             sorted_ranges = sorted(self.ranges)
             if compress:
                 compressed_ranges = list()
-                for range in sorted_ranges:
+                for _range in sorted_ranges:
                     if (len(compressed_ranges) > 0 and
-                            compressed_ranges[-1].hi == range.lo):
-                        compressed_ranges[-1].hi = range.hi
+                            compressed_ranges[-1].hi == _range.lo):
+                        compressed_ranges[-1].hi = _range.hi
                     else:
                         compressed_ranges.append(range)
                 self.ranges = compressed_ranges
@@ -2394,12 +2401,12 @@ class AddressRangeList:
             r.dump(f=f, addr_size=addr_size)
 
     def __str__(self):
-        output = StringIO.StringIO()
+        output = io.StringIO()
         self.dump(f=output)
         return output.getvalue()
 
 
-class DIERanges:
+class DIERanges(object):
     class Range(AddressRange):
         def __init__(self, lo, hi, die):
             AddressRange.__init__(self, lo, hi)
@@ -2441,13 +2448,13 @@ class DIERanges:
             print('%s%s' % (indent, r), file=f)
 
     def __str__(self):
-        output = StringIO.StringIO()
+        output = io.StringIO()
         self.dump(indent='', f=output)
         return output.getvalue()
 
 
-class DebugRanges:
-    class Ranges:
+class DebugRanges(object):
+    class Ranges(object):
         def __init__(self, cu, offset, ranges):
             self.offset = offset
             self.cu = cu
@@ -2486,7 +2493,7 @@ class DebugRanges:
                     print('%s%s' % (indent, r), file=f)
 
         def __str__(self):
-            output = StringIO.StringIO()
+            output = io.StringIO()
             self.dump(indent='', f=output, flat=True)
             return output.getvalue()
 
@@ -2535,7 +2542,7 @@ class Range(AddressRange):
                                                                  self.val2)
 
 
-class LineTable:
+class LineTable(object):
     def __init__(self, cu):
         self.cu = cu
         self.offset = cu.get_die().get_attribute_value_as_integer(
@@ -2735,7 +2742,7 @@ class LineTable:
                             row.basic_block = True
                         elif opcode == DW_LNS_const_add_pc:
                             adjust_opcode = 255 - prologue.opcode_base
-                            addr_units = adjust_opcode / prologue.line_range
+                            addr_units = old_div(adjust_opcode, prologue.line_range)
                             addr_offset = addr_units * prologue.min_inst_length
                             if debug:
                                 print('(%u)' % (addr_offset), end=' ')
@@ -2758,7 +2765,7 @@ class LineTable:
                                 opcode))
                     else:
                         adjust_opcode = opcode - prologue.opcode_base
-                        addr_units = adjust_opcode / prologue.line_range
+                        addr_units = old_div(adjust_opcode, prologue.line_range)
                         line_units = adjust_opcode % prologue.line_range
                         addr_offset = addr_units * prologue.min_inst_length
                         line_offset = prologue.line_base + line_units
@@ -2837,11 +2844,11 @@ class LineTable:
                     print('', file=f)
 
     def __str__(self):
-        output = StringIO.StringIO()
+        output = io.StringIO()
         self.dump(True, output)
         return output.getvalue()
 
-    class Row:
+    class Row(object):
         def __init__(self, prologue):
             self.range = AddressRange(0, 0)
             self.file = 1
@@ -2974,11 +2981,11 @@ class LineTable:
                 print('isa = %u' % (self.isa), end=' ', file=f)
 
         def __str__(self):
-            output = StringIO.StringIO()
+            output = io.StringIO()
             self.dump(True, output)
             return output.getvalue()
 
-    class File:
+    class File(object):
         def __init__(self):
             self.name = None
             self.dir_idx = None
@@ -3033,7 +3040,7 @@ class LineTable:
             self.length = data.get_uleb128()
             return True
 
-    class Prologue:
+    class Prologue(object):
         def __init__(self, cu):
             self.cu = cu
             self.offset = 0
@@ -3147,7 +3154,7 @@ class LineTable:
             return self.offset + self.total_length + 4
 
         def __str__(self):
-            output = StringIO.StringIO()
+            output = io.StringIO()
             self.dump(True, output)
             return output.getvalue()
 
@@ -3213,7 +3220,7 @@ class LineTable:
             return self.is_valid()
 
 
-class DIESearch:
+class DIESearch(object):
     def __init__(self, tag_match=None):
         self.tag_match = tag_match
 
@@ -3224,7 +3231,7 @@ class DIESearch:
         return True
 
 
-class DIE:
+class DIE(object):
     def __init__(self, cu, cu_die_index, depth):
         self.cu = cu
         self.cu_die_index = cu_die_index
@@ -3467,7 +3474,7 @@ class DIE:
         if self.demangled == -1:
             mangled = self.get_mangled_name()
             if mangled:
-                self.demangled = commands.getoutput('c++filt -n %s' % (
+                self.demangled = subprocess.getoutput('c++filt -n %s' % (
                     mangled))
             else:
                 self.demangled = None
@@ -3614,7 +3621,6 @@ class DIE:
         else:
             return fail_value
 
-
     def get_attribute_value_as_string(self, attr_enum_value, fail_value=None):
         attr_value = self.get_attribute_value(attr_enum_value)
         if attr_value:
@@ -3718,7 +3724,7 @@ class DIE:
                     self.depth * indent_width, ''))
 
     def __str__(self):
-        output = StringIO.StringIO()
+        output = io.StringIO()
         self.dump(max_depth=0, verbose=False, f=output)
         return output.getvalue()
 
@@ -3758,7 +3764,7 @@ class DIE:
         return None
 
 
-class CompileUnit:
+class CompileUnit(object):
     '''DWARF compile unit class'''
     def __init__(self, debug_info):
         self.debug_info = debug_info
@@ -3988,7 +3994,7 @@ class TypeUnit(CompileUnit):
         return self.is_valid()
 
 
-class DebugInfo:
+class DebugInfo(object):
     def __init__(self, dwarf):
         self.dwarf = dwarf
         self.cus = None
@@ -4141,7 +4147,7 @@ eAtomTypeTypeFlags = 5
 eAtomTypeQualNameHash = 6
 
 
-class AppleHash:
+class AppleHash(object):
     def __init__(self, data, prologue):
         self.data = data
         self.magic = 0
@@ -4221,7 +4227,7 @@ class AppleHash:
                                              f=f)
 
     def __str__(self):
-        output = StringIO.StringIO()
+        output = io.StringIO()
         self.dump(output)
         return output.getvalue()
 
@@ -4233,7 +4239,7 @@ class AppleHash:
         return h & 0xffffffff
 
 
-class DWARFHash:
+class DWARFHash(object):
     class AtomType(dict_utils.Enum):
         enum = {
             'eAtomTypeNULL': eAtomTypeNULL,
@@ -4248,7 +4254,7 @@ class DWARFHash:
         def __init__(self, initial_value=0):
             dict_utils.Enum.__init__(self, initial_value, self.enum)
 
-    class Atom:
+    class Atom(object):
         def __init__(self, type, form):
             self.type = DWARFHash.AtomType(type)
             self.form = Form(form)
@@ -4258,11 +4264,11 @@ class DWARFHash:
                                                           self.form), file=f)
 
         def __str__(self):
-            output = StringIO.StringIO()
+            output = io.StringIO()
             self.dump(output)
             return output.getvalue()
 
-    class Data:
+    class Data(object):
         def __init__(self):
             self.offset = 0
             self.name = None
@@ -4305,11 +4311,11 @@ class DWARFHash:
                     die_info.dump(f=f)
 
         def __str__(self):
-            output = StringIO.StringIO()
+            output = io.StringIO()
             self.dump(output)
             return output.getvalue()
 
-    class DIEInfo:
+    class DIEInfo(object):
         def __init__(self):
             self.offset = -1
             self.tag = None
@@ -4349,11 +4355,11 @@ class DWARFHash:
             print(file=f)
 
         def __str__(self):
-            output = StringIO.StringIO()
+            output = io.StringIO()
             self.dump(output)
             return output.getvalue()
 
-    class Prologue:
+    class Prologue(object):
         def __init__(self, string_data):
             self.die_base_offset = 0
             self.string_data = string_data
@@ -4419,7 +4425,7 @@ class DWARFHash:
                 atom.dump(index=i, f=f)
 
         def __str__(self):
-            output = StringIO.StringIO()
+            output = io.StringIO()
             self.dump(output)
             return output.getvalue()
 
@@ -4428,7 +4434,7 @@ class DWARFHash:
             return self.string_data.get_c_string()
 
 
-class DWARF:
+class DWARF(object):
     '''DWARF parsing code'''
     def __init__(self,
                  debug_abbrev_data=None,
@@ -4504,7 +4510,7 @@ class DWARF:
         return self.debug_aranges
 
 
-class StringTable:
+class StringTable(object):
     '''A string table that uniques strings and hands out offsets'''
     def __init__(self):
         self.bytes = "\0"
@@ -4528,7 +4534,7 @@ class StringTable:
         print()
 
 
-class DWARFGenerator:
+class DWARFGenerator(object):
     '''Classes to generate DWARF debug information.'''
     def __init__(self, dwarf_info):
         self.dwarf_info = dwarf_info
@@ -4544,7 +4550,7 @@ class DWARFGenerator:
         self.did_generate = False
 
     def create_encoder(self):
-        return file_extract.FileEncode(StringIO.StringIO(),
+        return file_extract.FileEncode(io.StringIO(),
                                        self.dwarf_info.byte_order,
                                        self.dwarf_info.addr_size)
 
@@ -4660,7 +4666,7 @@ class DWARFGenerator:
         if len(debug_abbrev_bytes) and len(debug_info_bytes):
             command += ' -'
             print('%s' % (command))
-            (status, output) = commands.getstatusoutput(command)
+            (status, output) = subprocess.getstatusoutput(command)
             if output:
                 print(output)
             if status != 0:
@@ -4677,15 +4683,15 @@ class DWARFGenerator:
         self.generate()
         byte_order = self.dwarf_info.byte_order
         addr_size = self.dwarf_info.addr_size
-        debug_abbrev = file_extract.FileExtract(StringIO.StringIO(
+        debug_abbrev = file_extract.FileExtract(io.StringIO(
             self.get_debug_abbrev_bytes()), byte_order, addr_size)
-        debug_info = file_extract.FileExtract(StringIO.StringIO(
+        debug_info = file_extract.FileExtract(io.StringIO(
             self.get_debug_info_bytes()), byte_order, addr_size)
-        debug_line = file_extract.FileExtract(StringIO.StringIO(
+        debug_line = file_extract.FileExtract(io.StringIO(
             self.get_debug_line_bytes()), byte_order, addr_size)
-        debug_ranges = file_extract.FileExtract(StringIO.StringIO(
+        debug_ranges = file_extract.FileExtract(io.StringIO(
             self.get_debug_ranges_bytes()), byte_order, addr_size)
-        debug_str = file_extract.FileExtract(StringIO.StringIO(
+        debug_str = file_extract.FileExtract(io.StringIO(
             self.get_debug_str_bytes()), byte_order, addr_size)
         return DWARF(debug_abbrev_data=debug_abbrev,
                      debug_info_data=debug_info,
@@ -4693,7 +4699,7 @@ class DWARFGenerator:
                      debug_ranges_data=debug_ranges,
                      debug_str_data=debug_str)
 
-    class CompileUnit:
+    class CompileUnit(object):
         '''DWARF generator compile unit'''
         def __init__(self, generator, tag):
             self.offset = -1
@@ -4734,9 +4740,9 @@ class DWARFGenerator:
                                           base_addr)
                     # Make all of the range information relative to the
                     # compile unit base address
-                    for range in ranges:
-                        range.lo -= base_addr
-                        range.hi -= base_addr
+                    for _range in ranges:
+                        _range.lo -= base_addr
+                        _range.hi -= base_addr
                 if ranges:
                     self.die.addAttribute(DW_AT_ranges, DW_FORM_sec_offset,
                                           ranges)
@@ -4822,7 +4828,7 @@ class DWARFGenerator:
                 self.aranges.cu_offset = self.offset
                 self.aranges.encode(self.generator.debug_aranges)
 
-    class Attribute:
+    class Attribute(object):
         '''DWARF generator DIE attribute'''
         def __init__(self, attr, form, value):
             self.attr_spec = AttributeSpec(attr, form)
@@ -4930,7 +4936,7 @@ class DWARFGenerator:
             elif form == DW_FORM_indirect:
                 raise ValueError("DW_FORM_indirect isn't handled")
 
-    class DIE:
+    class DIE(object):
         '''DWARF generator DIE (debug information entry)'''
         def __init__(self, cu, tag):
             self.offset = -1
