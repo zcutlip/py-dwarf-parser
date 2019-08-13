@@ -1,5 +1,5 @@
 __title__ = "py-dwarf"
-__version__ = "0.1.1b2"
+__version__ = "0.1.1b3"
 __summary__ = "A package to parse DWARF-formatted debugging information."
 
 """
