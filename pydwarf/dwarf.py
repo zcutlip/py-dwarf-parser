@@ -3246,6 +3246,7 @@ class DIE(object):
         self.demangled = -1
         self.user_visible_name = -1
         self.ranges = None
+        self.forward_declared = None
 
     def search(self, search, depth=sys.maxsize):
         matching_dies = list()
@@ -3763,6 +3764,12 @@ class DIE(object):
                     return self.cu.dies[i]
         return None
 
+    def is_forward_declared(self):
+        if self.forward_declared is None:
+            at_declaration = self.get_attribute_value_as_integer(DW_AT_declaration)
+            forward_declared = at_declaration > 0
+            self.forward_declared = forward_declared
+        return self.forward_declared
 
 class CompileUnit(object):
     '''DWARF compile unit class'''
