@@ -10,5 +10,5 @@ setup(name=about["__title__"],
       url="https://github.com/zcutlip/py-dwarf-parser",
       packages=find_packages(),
       python_requires='>=2.7',
-      install_requires=[]
+      install_requires=["future"]
       )
