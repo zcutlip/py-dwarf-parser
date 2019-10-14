@@ -1,13 +1,5 @@
 #!/usr/bin/python
 
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
-
-from builtins import str
-from builtins import range
-from past.utils import old_div
-from builtins import object
 import binascii
 import bisect
 import subprocess
@@ -23,9 +15,6 @@ from .util import dict_utils
 from .util import file_extract
 from .util import term_colors
 import six
-
-from future import standard_library
-standard_library.install_aliases()
 
 enable_colors = False
 indent_width = 4
@@ -2742,7 +2731,7 @@ class LineTable(object):
                             row.basic_block = True
                         elif opcode == DW_LNS_const_add_pc:
                             adjust_opcode = 255 - prologue.opcode_base
-                            addr_units = old_div(adjust_opcode, prologue.line_range)
+                            addr_units = adjust_opcode // prologue.line_range
                             addr_offset = addr_units * prologue.min_inst_length
                             if debug:
                                 print('(%u)' % (addr_offset), end=' ')
@@ -2765,7 +2754,7 @@ class LineTable(object):
                                 opcode))
                     else:
                         adjust_opcode = opcode - prologue.opcode_base
-                        addr_units = old_div(adjust_opcode, prologue.line_range)
+                        addr_units = adjust_opcode // prologue.line_range
                         line_units = adjust_opcode % prologue.line_range
                         addr_offset = addr_units * prologue.min_inst_length
                         line_offset = prologue.line_base + line_units
