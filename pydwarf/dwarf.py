@@ -14,7 +14,7 @@ import tempfile
 from .util import dict_utils
 from .util import file_extract
 from .util import term_colors
-import six
+
 
 enable_colors = False
 indent_width = 4
@@ -631,7 +631,7 @@ DW_UT_split_type = 0x06
 
 
 def is_string(value):
-    return isinstance(value, six.string_types)
+    return isinstance(value, str)
 
 
 def tag_is_variable(tag):
@@ -2141,7 +2141,7 @@ class DebugAranges(object):
 
         def __lt__(self, other):
             '''Provide less than comparison for bisect functions'''
-            if isinstance(other, six.integer_types):
+            if isinstance(other, int):
                 return self.address_ranges.max_range.lo < other
             else:
                 return (self.address_ranges.max_range.lo <
@@ -2288,7 +2288,7 @@ class AddressRange(object):
         return self.lo != other.lo or self.hi != other.hi
 
     def __lt__(self, other):
-        if isinstance(other, six.integer_types):
+        if isinstance(other, int):
             return self.lo < other
         else:
             if self.lo < other.lo:
@@ -2926,7 +2926,7 @@ class LineTable(object):
                     'children': False}
 
         def __lt__(self, other):
-            if isinstance(other, six.integer_types):
+            if isinstance(other, int):
                 return self.range.lo < other
             return self.range < other.range
 
@@ -3778,7 +3778,7 @@ class CompileUnit(object):
         self.die_ranges = None
 
     def __lt__(self, other):
-        if isinstance(other, six.integer_types):
+        if isinstance(other, int):
             return self.offset < other
         else:
             raise ValueError
@@ -4843,7 +4843,7 @@ class DWARFGenerator(object):
                 value = self.value.encode(die.cu.generator.debug_ranges)
 
             if form == DW_FORM_strp:
-                if isinstance(value, six.string_types):
+                if isinstance(value, int):
                     stroff = die.cu.generator.strtab.add(value)
                 else:
                     stroff = value
