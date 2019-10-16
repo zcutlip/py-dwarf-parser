@@ -38,7 +38,7 @@ fi
 
 echo "Tagging version: $version"
 
-git tag -a "$version" || quit "Failed to tag $version" $?
+git tag -a "$version" -m "version $version" || quit "Failed to tag $version" $?
 
 echo "Tags:"
 git tag -l
