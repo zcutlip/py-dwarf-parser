@@ -1,1 +1,1 @@
-py-object-file>=0.2.2b2
+py-object-file>=0.2.2b3
