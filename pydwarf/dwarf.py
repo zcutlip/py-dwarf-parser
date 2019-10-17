@@ -1691,7 +1691,7 @@ class Form(dict_utils.Enum):
                 print('error: failed to skip form %s' % (self))
                 return False
         if size > 0:
-            data.seek(data.tell() +size)
+            data.seek(data.tell() + size)
         return True
 
     def extract_value(self, die, data, str_data):
@@ -2235,10 +2235,10 @@ class DebugAranges(object):
             i = bisect.bisect_left(self.arange_sets, address)
             num = len(self.arange_sets)
             if i == num and num > 0:
-                i = num-1
+                i = num - 1
             if i < num:
                 if i > 0:
-                    off = self.arange_sets[i-1].get_cu_offset_for_address(
+                    off = self.arange_sets[i - 1].get_cu_offset_for_address(
                         address)
                     if off >= 0:
                         return off
@@ -2351,10 +2351,10 @@ class AddressRangeList(object):
             i = bisect.bisect_left(self.ranges, address)
             num = len(self.ranges)
             if i == num and num > 0:
-                i = num-1
+                i = num - 1
             if i < num:
-                if i > 0 and self.ranges[i-1].contains(address):
-                    return self.ranges[i-1]
+                if i > 0 and self.ranges[i - 1].contains(address):
+                    return self.ranges[i - 1]
                 elif self.ranges[i].contains(address):
                     return self.ranges[i]
         return None
@@ -2423,10 +2423,10 @@ class DIERanges(object):
         i = bisect.bisect_left(self.ranges, address)
         num = len(self.ranges)
         if i == num and num > 0:
-            i = num-1
+            i = num - 1
         if i < num:
-            if i > 0 and self.ranges[i-1].contains(address):
-                return self.ranges[i-1].die
+            if i > 0 and self.ranges[i - 1].contains(address):
+                return self.ranges[i - 1].die
             elif self.ranges[i].contains(address):
                 return self.ranges[i].die
         return None
@@ -2463,10 +2463,10 @@ class DebugRanges(object):
             i = bisect.bisect_left(self.ranges, address)
             n = len(self.ranges)
             if i == n and n > 0:
-                i = n-1
+                i = n - 1
             if i < n:
-                if i > 0 and self.ranges[i-1].contains(address):
-                    return self.ranges[i-1]
+                if i > 0 and self.ranges[i - 1].contains(address):
+                    return self.ranges[i - 1]
                 elif self.ranges[i].contains(address):
                     return self.ranges[i]
             return None
@@ -2581,10 +2581,10 @@ class LineTable(object):
         i = bisect.bisect_left(sequence_ranges, address)
         n = len(sequence_ranges)
         if i == n and n > 0:
-            i = n-1
+            i = n - 1
         if i < n:
-            if i > 0 and sequence_ranges[i-1].contains(address):
-                return sequence_ranges[i-1]
+            if i > 0 and sequence_ranges[i - 1].contains(address):
+                return sequence_ranges[i - 1]
             elif sequence_ranges[i].contains(address):
                 return sequence_ranges[i]
         return None
@@ -2594,10 +2594,10 @@ class LineTable(object):
         i = bisect.bisect_left(rows, address, sequence.val1, sequence.val2)
         n = len(rows)
         if i == n and n > 0:
-            i = n-1
+            i = n - 1
         if i < len(rows):
-            if i > 0 and rows[i-1].contains(address):
-                return i-1
+            if i > 0 and rows[i - 1].contains(address):
+                return i - 1
             elif rows[i].contains(address):
                 return i
         return -1
@@ -2618,7 +2618,7 @@ class LineTable(object):
                                                             arange.lo)
                 if row_idx >= 0:
                     rows = self.get_rows()
-                    for i in range(row_idx, sequence.val2+1):
+                    for i in range(row_idx, sequence.val2 + 1):
                         matching_rows.append(rows[i])
         return matching_rows
 
@@ -3004,7 +3004,7 @@ class LineTable(object):
                     else:
                         self.path = self.name
                 else:
-                    directory = prologue.directories[self.dir_idx-1]
+                    directory = prologue.directories[self.dir_idx - 1]
                     path = os.path.join(directory, self.name)
                     if not path.startswith('/'):
                         cu_die = prologue.cu.get_die()
@@ -3074,7 +3074,7 @@ class LineTable(object):
             dir_idx = self.add_directory(dir)
             for (i, file) in enumerate(self.files):
                 if file.dir_idx == dir_idx and file.name == basename:
-                    return i+1
+                    return i + 1
             file = LineTable.File()
             file.name = basename
             file.dir_idx = dir_idx
@@ -3109,20 +3109,20 @@ class LineTable(object):
                     self.opcode_base), file=f)
                 max_len = DW_LNS.max_width()
                 for (i, op_len) in enumerate(self.opcode_lengths):
-                    dw_lns = DW_LNS(i+1)
+                    dw_lns = DW_LNS(i + 1)
                     print('prologue.opcode_lengths[%-*s] = %u' % (max_len,
                                                                   dw_lns,
                                                                   op_len), file=f)
                 for (i, directory) in enumerate(self.directories):
-                    print('prologue.directories[%u] = "%s"' % (i+1,
+                    print('prologue.directories[%u] = "%s"' % (i + 1,
                                                                directory), file=f)
                 for (i, filename) in enumerate(self.files):
-                    filename.dump(i+1, f=f)
+                    filename.dump(i + 1, f=f)
             else:
                 for (i, directory) in enumerate(self.directories):
-                    print('directory[%u] = "%s"' % (i+1, directory), file=f)
+                    print('directory[%u] = "%s"' % (i + 1, directory), file=f)
                 for (i, filename) in enumerate(self.files):
-                    print('file[%u] = "%s"' % (i+1,
+                    print('file[%u] = "%s"' % (i + 1,
                                                filename.get_path(self)), file=f)
 
         def get_file(self, file_num):
@@ -3248,7 +3248,7 @@ class DIE(object):
             if child:
                 sibling = child.get_sibling()
                 while sibling:
-                    matching_dies.extend(sibling.search(search, depth-1))
+                    matching_dies.extend(sibling.search(search, depth - 1))
                     sibling = sibling.get_sibling()
         return matching_dies
 
@@ -3705,10 +3705,10 @@ class DIE(object):
             if max_depth > 0:
                 child = self.get_child()
                 if child:
-                    child.dump(max_depth=max_depth-1, verbose=verbose, f=f)
+                    child.dump(max_depth=max_depth - 1, verbose=verbose, f=f)
                     sibling = child.get_sibling()
                     while sibling:
-                        sibling.dump(max_depth=max_depth-1, verbose=verbose,
+                        sibling.dump(max_depth=max_depth - 1, verbose=verbose,
                                      f=f)
                         sibling = sibling.get_sibling()
         else:
@@ -3732,12 +3732,12 @@ class DIE(object):
     def get_child(self):
         abbrev_decl = self.get_abbrev_decl()
         if abbrev_decl and abbrev_decl.has_children:
-            return self.cu.dies[self.cu_die_index+1]
+            return self.cu.dies[self.cu_die_index + 1]
         else:
             return None
 
     def get_sibling(self):
-        for i in range(self.cu_die_index+1, len(self.cu.dies)):
+        for i in range(self.cu_die_index + 1, len(self.cu.dies)):
             depth = self.cu.dies[i].depth
             if depth > self.depth:
                 continue
@@ -3750,7 +3750,7 @@ class DIE(object):
     def get_parent(self):
         if self.cu_die_index > 0:
             parent_depth = self.depth - 1
-            for i in range(self.cu_die_index-1, -1, -1):
+            for i in range(self.cu_die_index - 1, -1, -1):
                 depth = self.cu.dies[i].depth
                 if depth == parent_depth:
                     return self.cu.dies[i]
