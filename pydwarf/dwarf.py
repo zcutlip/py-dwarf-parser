@@ -3603,7 +3603,7 @@ class DIE(object):
     def get_attribute_value_as_integer(self, attr_enum_value, fail_value=0):
         attr_value = self.get_attribute_value(attr_enum_value)
         if attr_value:
-            if type(attr_value.value) is int:
+            if isinstance(attr_value.value, int):
                 return attr_value.value
             elif isinstance(attr_value.get_value(self), Location):
                 loc = attr_value.get_value(self)
@@ -3621,7 +3621,7 @@ class DIE(object):
     def get_attribute_value_as_die(self, attr_enum_value):
         attr_value = self.get_attribute_value(attr_enum_value)
         if attr_value:
-            if type(attr_value.value) is int:
+            if isinstance(attr_value.value, int):
                 return self.get_referenced_die_with_offset(attr_value.value)
         return None
 
