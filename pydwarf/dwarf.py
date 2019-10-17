@@ -1562,9 +1562,9 @@ class Form(dict_utils.Enum):
 
     def is_reference(self):
         form = self.get_enum_value()
-        if (form == DW_FORM_ref1 or form == DW_FORM_ref2 or
-                form == DW_FORM_ref4 or form == DW_FORM_ref8 or
-                form == DW_FORM_ref_udata or form == DW_FORM_ref_addr):
+        if (form == DW_FORM_ref1 or form == DW_FORM_ref2
+            or form == DW_FORM_ref4 or form == DW_FORM_ref8
+                or form == DW_FORM_ref_udata or form == DW_FORM_ref_addr):
             return True
         else:
             return False
@@ -1943,16 +1943,16 @@ class AbbrevDecl(object):
     def might_have_attribute(self, attr_enum_value):
         for attr_spec in self.attribute_specs:
             attr = attr_spec.attr.get_enum_value()
-            if (attr == attr_enum_value or attr == DW_AT_specification or
-                    attr == DW_AT_abstract_origin):
+            if (attr == attr_enum_value or attr == DW_AT_specification
+                    or attr == DW_AT_abstract_origin):
                 return True
         return False
 
     def might_have_any_attributes(self, attr_enum_values):
         for attr_spec in self.attribute_specs:
             attr = attr_spec.attr.get_enum_value()
-            if (attr in attr_enum_values or attr == DW_AT_specification or
-                    attr == DW_AT_abstract_origin):
+            if (attr in attr_enum_values or attr == DW_AT_specification
+                    or attr == DW_AT_abstract_origin):
                 return True
         return False
 
@@ -2003,8 +2003,7 @@ class AbbrevDecl(object):
 
     def get_fixed_size(self, die):
         if self.fixed_size >= 0:
-            return (self.fixed_size +
-                    self.fixed_addrs * die.cu.dwarf_info.addr_size)
+            return (self.fixed_size + self.fixed_addrs * die.cu.dwarf_info.addr_size)
         else:
             return -1
 
@@ -2073,8 +2072,7 @@ class AbbrevSet(object):
                     if abbrev_len == curr_abbrev_len:
                         match = True
                         for i in range(abbrev_len):
-                            if (abbrev.attribute_specs[i] !=
-                                    curr_abbrev.attribute_specs[i]):
+                            if (abbrev.attribute_specs[i] != curr_abbrev.attribute_specs[i]):
                                 match = False
                                 break
                         if match:
@@ -2135,9 +2133,9 @@ class DebugAranges(object):
             self.address_ranges = None
 
         def is_valid(self):
-            return (self.length > 0 and self.dwarf_info.version <= 5 and
-                    self.dwarf_info.addr_size > 0 and
-                    len(self.address_ranges) > 0)
+            return (self.length > 0 and self.dwarf_info.version <= 5
+                    and self.dwarf_info.addr_size > 0
+                    and len(self.address_ranges) > 0)
 
         def get_cu_offset_for_address(self, address):
             if self.address_ranges.contains(address):
@@ -2149,8 +2147,7 @@ class DebugAranges(object):
             if isinstance(other, int):
                 return self.address_ranges.max_range.lo < other
             else:
-                return (self.address_ranges.max_range.lo <
-                        other.address_ranges.max_range.lo)
+                return (self.address_ranges.max_range.lo < other.address_ranges.max_range.lo)
 
         def dump(self, f=sys.stdout):
             f.write('%s: length = 0x%8.8x, version = %u, cu_offset = 0x%8.8x, '
@@ -2182,7 +2179,7 @@ class DebugAranges(object):
             encoder.put_uint8(self.dwarf_info.addr_size)
             encoder.put_uint8(self.seg_size)
             # Align the first tuple in the right boundary
-            encoder.align_to(self.dwarf_info.addr_size*2)
+            encoder.align_to(self.dwarf_info.addr_size * 2)
             for address_range in self.address_ranges:
                 encoder.put_address(address_range.lo)
                 encoder.put_address(address_range.hi - address_range.lo)
@@ -2200,8 +2197,8 @@ class DebugAranges(object):
             self.cu_offset = data.get_uint32()
             self.dwarf_info.addr_size = data.get_uint8()
             self.seg_size = data.get_uint8()
-            if (self.length == 0 or self.dwarf_info.version == 0 or
-                    self.dwarf_info.addr_size == 0):
+            if (self.length == 0 or self.dwarf_info.version == 0
+                    or self.dwarf_info.addr_size == 0):
                 return False
             data.set_addr_size(self.dwarf_info.addr_size)
             self.address_ranges = AddressRangeList()
@@ -2378,8 +2375,8 @@ class AddressRangeList(object):
             if compress:
                 compressed_ranges = list()
                 for _range in sorted_ranges:
-                    if (len(compressed_ranges) > 0 and
-                            compressed_ranges[-1].hi == _range.lo):
+                    if (len(compressed_ranges) > 0
+                            and compressed_ranges[-1].hi == _range.lo):
                         compressed_ranges[-1].hi = _range.hi
                     else:
                         compressed_ranges.append(range)
@@ -2806,8 +2803,8 @@ class LineTable(object):
             func_die = None
             for row in line_entries:
                 if row.range.lo < row.range.hi:
-                    if not (func_die and
-                            func_die.get_die_ranges().contains(row.range.lo)):
+                    if not (func_die
+                            and func_die.get_die_ranges().contains(row.range.lo)):
                         func_die = self.cu.lookup_die_by_address(row.range.lo)
                         if func_die:
                             if verbose:
@@ -2869,8 +2866,7 @@ class LineTable(object):
                     # Pretend we have unsigned 32 or 64 bit overflow
                     positive_delta = prev.range.lo - self.range.lo
                     debug_line.put_uint8(DW_LNS_advance_pc)
-                    debug_line.put_uleb128(0xffffffffffffffff -
-                                           positive_delta + 1)
+                    debug_line.put_uleb128(0xffffffffffffffff - positive_delta + 1)
                 # If our file changed, set it
                 if self.file != prev.file:
                     debug_line.put_uint8(DW_LNS_set_file)
@@ -3088,8 +3084,8 @@ class LineTable(object):
             return len(self.files)
 
         def is_valid(self):
-            return (self.total_length > 0 and self.version <= 5 and
-                    self.prologue_length > 0 and len(self.opcode_lengths) > 0
+            return (self.total_length > 0 and self.version <= 5
+                    and self.prologue_length > 0 and len(self.opcode_lengths) > 0
                     and len(self.files) > 0)
 
         def dump(self, verbose, f=sys.stdout):
@@ -3546,8 +3542,8 @@ class DIE(object):
                     debug_str = self.cu.debug_info.dwarf.debug_str_data
                     if attr_value.extract_value(self, data, debug_str):
                         return attr_value
-                elif (curr_attr_enum_value == DW_AT_abstract_origin or
-                      curr_attr_enum_value == DW_AT_specification):
+                elif (curr_attr_enum_value == DW_AT_abstract_origin
+                      or curr_attr_enum_value == DW_AT_specification):
                     attr_value = AttributeValue(attr_spec)
                     debug_str = self.cu.debug_info.dwarf.debug_str_data
                     if attr_value.extract_value(self, data, debug_str):
@@ -3588,8 +3584,8 @@ class DIE(object):
                     else:
                         print('error: failed to extract attribute value...')
                         return None
-                elif (curr_attr_enum_value == DW_AT_abstract_origin or
-                      curr_attr_enum_value == DW_AT_specification):
+                elif (curr_attr_enum_value == DW_AT_abstract_origin
+                      or curr_attr_enum_value == DW_AT_specification):
                     attr_value = AttributeValue(attr_spec)
                     debug_str = self.cu.debug_info.dwarf.debug_str_data
                     if attr_value.extract_value(self, data, debug_str):
@@ -3649,8 +3645,8 @@ class DIE(object):
                     if include_specification_and_abstract_origin:
                         attr = attr_value.attr_spec.attr
                         attr_enum_value = attr.get_enum_value()
-                        if (attr_enum_value == DW_AT_abstract_origin or
-                                attr_enum_value == DW_AT_specification):
+                        if (attr_enum_value == DW_AT_abstract_origin
+                                or attr_enum_value == DW_AT_specification):
                             other_die_offsets.append(attr_value.value)
                 else:
                     print('error: failed to extract a value for %s in die '
@@ -3867,10 +3863,10 @@ class CompileUnit(object):
         die.dump(verbose=verbose, max_depth=max_depth, f=f)
 
     def is_valid(self):
-        return (self.length > 0 and
-                self.dwarf_info.version > 0 and
-                self.dwarf_info.version <= 7 and
-                self.dwarf_info.addr_size > 0)
+        return (self.length > 0
+                and self.dwarf_info.version > 0
+                and self.dwarf_info.version <= 7
+                and self.dwarf_info.addr_size > 0)
 
     def __str__(self):
         return ('%s: Compile Unit: length = 0x%8.8x, version = 0x%4.4x, '
