@@ -513,6 +513,7 @@ DW_LANG_Rust = 0x001c
 DW_LANG_C11 = 0x001d
 DW_LANG_Swift = 0x001e
 DW_LANG_Julia = 0x001f
+DW_LANG_C_plus_plus_14 = 0x0021
 DW_LANG_lo_user = 0x8000
 DW_LANG_hi_user = 0xFFFF
 
