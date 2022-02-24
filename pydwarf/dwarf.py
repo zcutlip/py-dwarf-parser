@@ -1124,7 +1124,7 @@ class Location(object):
             self.operands = list()
             if self.attr_value.attr_spec.form.is_block():
                 data = file_extract.FileExtract(
-                    io.StringIO(self.attr_value.value),
+                    io.BytesIO(self.attr_value.value),
                     self.die.cu.data.byte_order,
                     self.die.cu.data.addr_size)
                 op = data.get_uint8()
