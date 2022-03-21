@@ -2867,7 +2867,8 @@ class LineTable(object):
                     # Pretend we have unsigned 32 or 64 bit overflow
                     positive_delta = prev.range.lo - self.range.lo
                     debug_line.put_uint8(DW_LNS_advance_pc)
-                    debug_line.put_uleb128(0xffffffffffffffff - positive_delta + 1)
+                    debug_line.put_uleb128(
+                        0xffffffffffffffff - positive_delta + 1)
                 # If our file changed, set it
                 if self.file != prev.file:
                     debug_line.put_uint8(DW_LNS_set_file)
