@@ -3388,7 +3388,34 @@ class DIE(object):
         if abbrev_decl:
             tag = abbrev_decl.tag.get_enum_value()
             if tag == DW_TAG_array_type:
-                return self.get_child().get_array_bounds()
+                all_bounds = []
+                children = self.get_children()
+
+                # there may be multiple sibling children
+                # so get each child's bounds
+                for child in children:
+                    bounds = child.get_array_bounds()
+                    if bounds:
+                        all_bounds.append(bounds[0])
+                all_bounds.sort(key=lambda b: b[0])
+
+                # for each child total range becomes mutliple of previous child
+                # so for two ranges [(0,8)(0,12)]
+                # this means there are 12 (0,8) ranges
+                # e.g., a uint32_t[8][12] should be 12 x uint32_t[8]
+                # uint32_t[8][12][16] should be 16 X (12 x uint32_t[8]) and so forth
+                cumulative_rng = 0
+                for b1, b2 in all_bounds:
+                    rng = b2 - b1
+                    if cumulative_rng > 0:
+                        cumulative_rng = rng * cumulative_rng
+                    else:
+                        cumulative_rng = rng
+
+                lo = all_bounds[0][0]
+                hi = cumulative_rng
+                bound = [(lo, hi)]
+                return bound
             elif tag == DW_TAG_subrange_type:
                 bound = None
                 attr_values = self.get_attribute_values(False)
