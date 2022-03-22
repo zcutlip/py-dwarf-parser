@@ -3412,10 +3412,11 @@ class DIE(object):
                         cumulative_rng = rng * cumulative_rng
                     else:
                         cumulative_rng = rng
-
-                lo = all_bounds[0][0]
-                hi = cumulative_rng
-                bound = [(lo, hi)]
+                bound = None
+                if all_bounds:
+                    lo = all_bounds[0][0]
+                    hi = cumulative_rng
+                    bound = [(lo, hi)]
                 return bound
             elif tag == DW_TAG_subrange_type:
                 bound = None
