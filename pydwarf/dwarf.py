@@ -4030,6 +4030,7 @@ class DebugInfo(object):
     def __init__(self, dwarf):
         self.dwarf = dwarf
         self.cus = None
+        self.cu_offset_map = {}
         self.tus = None
         self.die_ranges = None
 
@@ -4040,8 +4041,10 @@ class DebugInfo(object):
             cu = CompileUnit(self)
             while cu.unpack(data):
                 self.cus.append(cu)
+                self.cu_offset_map[cu.offset] = cu
                 data.seek(cu.get_next_cu_offset())
                 cu = CompileUnit(self)
+
         return self.cus
 
     def get_type_units(self):
@@ -4073,6 +4076,19 @@ class DebugInfo(object):
                     self.die_ranges.ranges.extend(cu_die_ranges.ranges)
             self.die_ranges.sort()
         return self.die_ranges
+
+    def get_compile_unit_at_offset(self, cu_offset):
+        cu = self.cu_offset_map.get(cu_offset)
+        if not cu:
+            data = self.dwarf.debug_info_data
+            data.seek(cu_offset)
+            cu = CompileUnit(self)
+            if cu.unpack(data):
+                self.cu_offset_map[cu_offset] = cu
+            else:
+                cu = None
+
+        return cu
 
     def get_compile_unit_with_offset(self, cu_offset):
         cus = self.get_compile_units()
